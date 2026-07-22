@@ -1,16 +1,20 @@
-import type { Request } from "express";
+import { Router, type IRouter } from "express";
+import { OWNER_USERNAME, OWNER_PASSWORD, OWNER_SECRET, isOwnerReq } from "../lib/auth.js";
 
-export const OWNER_USERNAME = "Drakzx";
-export const OWNER_PASSWORD = "Owner1!!";
-// Fixed shared secret — same as original server.js.
-// Change this string for extra security.
-export const OWNER_SECRET = "drakzx-owner-secret-2026";
+const router: IRouter = Router();
 
-export function getToken(req: Request): string | null {
-  const h = req.headers["authorization"] || "";
-  return h.startsWith("Bearer ") ? h.slice(7) : null;
-}
+router.post("/auth/login", async (req, res): Promise<void> => {
+  const { username, password } = req.body as { username?: string; password?: string };
+  if (username === OWNER_USERNAME && password === OWNER_PASSWORD) {
+    res.json({ token: OWNER_SECRET, username: OWNER_USERNAME });
+    return;
+  }
+  res.status(401).json({ error: "Invalid credentials" });
+});
 
-export function isOwnerReq(req: Request): boolean {
-  return getToken(req) === OWNER_SECRET;
-}
+router.get("/auth/verify", async (req, res): Promise<void> => {
+  const ok = isOwnerReq(req);
+  res.status(ok ? 200 : 401).json({ ok });
+});
+
+export default router;
