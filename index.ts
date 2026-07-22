@@ -1,13 +1,16 @@
-import { Router, type IRouter } from "express";
-import healthRouter from "./health.js";
-import authRouter from "./auth.js";
-import projectsRouter from "./projects.js";
-import pollsRouter from "./polls.js";
-const router: IRouter = Router();
+import { drizzle } from "drizzle-orm/node-postgres";
+import pg from "pg";
+import * as schema from "./schema";
 
-router.use(healthRouter);
-router.use(authRouter);
-router.use(projectsRouter);
-router.use(pollsRouter);
+const { Pool } = pg;
 
-export default router;
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?",
+  );
+}
+
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const db = drizzle(pool, { schema });
+
+export * from "./schema";
